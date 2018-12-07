@@ -144,6 +144,38 @@ inline int Checksum(BoxIds const& boxIds)
     return twos * threes;
 }
 
+inline int NumberDifferences(std::string const& a, std::string const& b)
+{
+    assert(a.size() == b.size());
+
+    int numberDifferences = 0;
+    for (std::string::size_type s = 0; s != a.size(); ++s)
+        numberDifferences += a[s] != b[s];
+
+    // std::cout << numberDifferences << ' ' << a << ' ' << b << '\n';
+
+    return numberDifferences;
+}
+
+inline std::string CorrectBoxIds(BoxIds const& boxIds)
+{
+    std::string lettersInCommon;
+
+    for (auto i = boxIds.begin(); i != boxIds.end(); ++i)
+    {
+        auto found = std::find_if(i + 1, boxIds.end(), [=](std::string const& boxId){ return 1 == NumberDifferences(*i, boxId); });
+        if (boxIds.end() != found)
+        {
+            for (std::string::size_type s = 0; s != i->size(); ++s)
+                if ((*i)[s] == (*found)[s])
+                    lettersInCommon += (*i)[s];
+            break;
+        }
+    }
+
+    return lettersInCommon;
+}
+
 int Main(int /* argc */, char const*const /* argv */[])
 {
     BoxIds boxIds;
@@ -151,6 +183,7 @@ int Main(int /* argc */, char const*const /* argv */[])
     std::copy(istream_iterator(std::cin), istream_iterator(), std::back_inserter(boxIds));
 
     std::cout << Checksum(boxIds) << std::endl;
+    std::cout << CorrectBoxIds(boxIds) << std::endl;
            
 
     return 0;
