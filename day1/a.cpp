@@ -115,7 +115,8 @@ extern int Main(int /* argc */, char const*const /* argv */[]);
 #include <filesystem>
 #endif
 
-int Main(int /* argc */, char const*const /* argv */[])
+int ResultingFrequency();
+int ResultingFrequency()
 {
     int frequency = 0;
     int change;
@@ -123,7 +124,12 @@ int Main(int /* argc */, char const*const /* argv */[])
     while (std::cin >> change)
         frequency += change;
 
-    std::cout << frequency << std::endl;
+    return frequency;
+}
+
+int Main(int /* argc */, char const*const /* argv */[])
+{
+    std::cout << ResultingFrequency() << std::endl;
 
     return 0;
 }
