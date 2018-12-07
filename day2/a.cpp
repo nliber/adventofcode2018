@@ -115,8 +115,44 @@ extern int Main(int /* argc */, char const*const /* argv */[]);
 #include <filesystem>
 #endif
 
+struct BoxIds : std::vector<std::string> {};
+struct Counts : std::map<char, int> {};
+
+inline int Checksum(BoxIds const& boxIds)
+{
+    int twos = 0;
+    int threes = 0;
+    for (std::string const& boxId : boxIds)
+    {
+        Counts counts;
+        for (char letter : boxId)
+            ++counts[letter];
+
+        bool containsTwo = false;
+        bool containsThree = false;
+        for (auto& count : counts)
+        {
+            if (2 == count.second)
+                containsTwo = true;
+            if (3 == count.second)
+                containsThree = true;
+        }
+        twos += containsTwo;
+        threes += containsThree;
+    }
+
+    return twos * threes;
+}
+
 int Main(int /* argc */, char const*const /* argv */[])
 {
+    BoxIds boxIds;
+    using istream_iterator = std::istream_iterator<BoxIds::value_type>;
+    std::copy(istream_iterator(std::cin), istream_iterator(), std::back_inserter(boxIds));
+
+    std::cout << Checksum(boxIds) << std::endl;
+           
+
     return 0;
 }
 
