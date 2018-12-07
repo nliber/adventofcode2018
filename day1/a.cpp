@@ -125,19 +125,19 @@ int ResultingFrequency(Changes const& changes)
     return std::accumulate(std::begin(changes), std::end(changes), int());
 }
 
-int Twice();
-int Twice()
+int Twice(Changes changes);
+int Twice(Changes changes)
 {
-    int           frequency = 0;
-    int           change;
+    if (changes.empty())
+        return 0;
+
+    int frequency = 0;
     std::set<int> frequencies;
-
-    while (frequencies.insert(frequency).second && std::cin >> change)
+    while (frequencies.insert(frequency).second)
     {
-        std::cout << frequency << " + " << change << " = ";
-        frequency += change;
-        std::cout << frequency << '\n';
-
+        frequency += changes.front();
+        changes.push_back(changes.front());
+        changes.pop_front();
     }
 
     return frequency;
@@ -151,6 +151,7 @@ int Main(int /* argc */, char const*const /* argv */[])
         changes.push_back(change);
 
     std::cout << ResultingFrequency(changes) << std::endl;
+    std::cout << Twice(changes) << std::endl;
 
     return 0;
 }
