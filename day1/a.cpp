@@ -117,6 +117,14 @@ extern int Main(int /* argc */, char const*const /* argv */[]);
 
 int Main(int /* argc */, char const*const /* argv */[])
 {
+    int frequency = 0;
+    int change;
+
+    while (std::cin >> change)
+        frequency += change;
+
+    std::cout << frequency << std::endl;
+
     return 0;
 }
 
