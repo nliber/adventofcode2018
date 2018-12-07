@@ -115,21 +115,42 @@ extern int Main(int /* argc */, char const*const /* argv */[]);
 #include <filesystem>
 #endif
 
-int ResultingFrequency();
-int ResultingFrequency()
+struct Changes : std::deque<int>
 {
-    int frequency = 0;
-    int change;
+};
 
-    while (std::cin >> change)
+int ResultingFrequency(Changes const& changes);
+int ResultingFrequency(Changes const& changes)
+{
+    return std::accumulate(std::begin(changes), std::end(changes), int());
+}
+
+int Twice();
+int Twice()
+{
+    int           frequency = 0;
+    int           change;
+    std::set<int> frequencies;
+
+    while (frequencies.insert(frequency).second && std::cin >> change)
+    {
+        std::cout << frequency << " + " << change << " = ";
         frequency += change;
+        std::cout << frequency << '\n';
+
+    }
 
     return frequency;
 }
 
 int Main(int /* argc */, char const*const /* argv */[])
 {
-    std::cout << ResultingFrequency() << std::endl;
+    Changes changes;
+    int change;
+    while (std::cin >> change)
+        changes.push_back(change);
+
+    std::cout << ResultingFrequency(changes) << std::endl;
 
     return 0;
 }
