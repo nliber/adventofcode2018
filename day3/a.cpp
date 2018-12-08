@@ -140,7 +140,7 @@ struct Square : boost::numeric::ublas::matrix<size_t>
     { return os << static_cast<matrix const&>(that); }
 };
 
-inline int NoMatterHowYouSliceIt(Claims const& claims)
+inline ptrdiff_t NoMatterHowYouSliceIt(Claims const& claims)
 {
     Square square;
 
@@ -155,8 +155,12 @@ inline int NoMatterHowYouSliceIt(Claims const& claims)
     }
 
     std::cout << square << '\n';
-    
-    return 0;
+
+    ptrdiff_t count = 0;
+    for (auto row = square.begin1(); row != square.end1(); ++row)
+        count += std::count_if(row.begin(), row.end(), [](size_t s){ return 1 < s; });
+
+    return count;
 }
 
 int Main(int /* argc */, char const*const /* argv */[])
@@ -168,7 +172,7 @@ int Main(int /* argc */, char const*const /* argv */[])
     claims.emplace_back(2, 3, 1, 4, 4);
     claims.emplace_back(3, 5, 5, 2, 2);
 
-    NoMatterHowYouSliceIt(claims);
+    std::cout << NoMatterHowYouSliceIt(claims) << std::endl;
     return 0;
 }
 
