@@ -115,8 +115,60 @@ extern int Main(int /* argc */, char const*const /* argv */[]);
 #include <filesystem>
 #endif
 
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/io.hpp>
+
+struct Claim
+{
+    Claim(size_t c, size_t l, size_t t, size_t w, size_t h)
+    : claimId(c), left(l), top(t), width(w), height(h) {}
+
+    size_t claimId;
+    size_t left;
+    size_t top;
+    size_t width;
+    size_t height;
+};
+
+struct Claims : std::vector<Claim> {};
+
+struct Square : boost::numeric::ublas::matrix<size_t>
+{
+    using matrix = boost::numeric::ublas::matrix<size_t>;
+
+    friend std::ostream& operator<<(std::ostream& os, Square const& that)
+    { return os << static_cast<matrix const&>(that); }
+};
+
+inline int NoMatterHowYouSliceIt(Claims const& claims)
+{
+    Square square;
+
+    for (Claim const& claim : claims)
+    {
+        square.resize(std::max(square.size1(), claim.top + claim.height),
+                      std::max(square.size2(), claim.left + claim.width));
+
+        for (size_t r = claim.top; r != claim.top + claim.height; ++r)
+            for (size_t c = claim.left; c != claim.left + claim.width; ++c)
+                ++square(r, c);
+    }
+
+    std::cout << square << '\n';
+    
+    return 0;
+}
+
 int Main(int /* argc */, char const*const /* argv */[])
 {
+    Claims claims;
+
+    //claims.emplace_back(123, 3, 2, 5, 4);
+    claims.emplace_back(1, 1, 3, 4, 4);
+    claims.emplace_back(2, 3, 1, 4, 4);
+    claims.emplace_back(3, 5, 5, 2, 2);
+
+    NoMatterHowYouSliceIt(claims);
     return 0;
 }
 
