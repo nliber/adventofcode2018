@@ -69,8 +69,10 @@ extern int Main(int /* argc */, char const*const /* argv */[]);
 #include <queue>
 
 #include <algorithm>
+#if 0
 #if __has_include(<execution>)
 #include <execution>
+#endif
 #endif
 
 #include <iterator>
@@ -115,64 +117,114 @@ extern int Main(int /* argc */, char const*const /* argv */[]);
 #include <filesystem>
 #endif
 
+#include <cool/Out.h>
+
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
 struct Claim
 {
-    Claim(size_t c, size_t l, size_t t, size_t w, size_t h)
-    : claimId(c), left(l), top(t), width(w), height(h) {}
+    Claim() = default;
 
-    size_t claimId;
+    explicit Claim(size_t i, size_t l, size_t t, size_t w, size_t h)
+        : id(i), left(l), top(t), width(w), height(h) {}
+
+    friend std::ostream& operator<<(std::ostream& os, Claim const& that)
+    { return os << '#' << that.id << " @ " << that.left << ',' << that.top << ": " << that.width << 'x' << that.height; }
+
+    size_t id;
     size_t left;
     size_t top;
     size_t width;
     size_t height;
 };
 
-struct Claims : std::vector<Claim> {};
-
-struct Square : boost::numeric::ublas::matrix<size_t>
+struct Claims : std::vector<Claim>
 {
-    using matrix = boost::numeric::ublas::matrix<size_t>;
+    friend std::ostream& operator<<(std::ostream& os, Claims const& that)
+    { return os << cool::Out<Claims, true>(that); }
+};
+
+struct Square : boost::numeric::ublas::matrix<short, boost::numeric::ublas::row_major, std::vector<short>>
+{
+    using matrix = boost::numeric::ublas::matrix<short, boost::numeric::ublas::row_major, std::vector<short>>;
+
+    Square() = default;
+
+    explicit Square(Claims const& claims)
+    {
+        for (Claim const& claim : claims)
+        {
+            resize(std::max(size1(), claim.top + claim.height),
+                   std::max(size2(), claim.left + claim.width));
+
+            for (size_t r = claim.top; r != claim.top + claim.height; ++r)
+                for (size_t c = claim.left; c != claim.left + claim.width; ++c)
+                    ++(*this)(r, c);
+        }
+    }
 
     friend std::ostream& operator<<(std::ostream& os, Square const& that)
     { return os << static_cast<matrix const&>(that); }
 };
 
-inline ptrdiff_t NoMatterHowYouSliceIt(Claims const& claims)
+inline
+ptrdiff_t NoMatterHowYouSliceIt(Square const& square)
 {
-    Square square;
-
-    for (Claim const& claim : claims)
-    {
-        square.resize(std::max(square.size1(), claim.top + claim.height),
-                      std::max(square.size2(), claim.left + claim.width));
-
-        for (size_t r = claim.top; r != claim.top + claim.height; ++r)
-            for (size_t c = claim.left; c != claim.left + claim.width; ++c)
-                ++square(r, c);
-    }
-
-    std::cout << square << '\n';
-
     ptrdiff_t count = 0;
     for (auto row = square.begin1(); row != square.end1(); ++row)
-        count += std::count_if(row.begin(), row.end(), [](size_t s){ return 1 < s; });
+        count += std::count_if(row.begin(), row.end(), [](Square::value_type v){ return 1 < v; });
 
     return count;
 }
+
+inline
+bool Overlaps(Claim const& claim, Square const& square)
+{
+    for (size_t r = claim.top; r != claim.top + claim.height; ++r)
+        for (size_t c = claim.left; c != claim.left + claim.width; ++c)
+            if (1 < square(r, c))
+                return true;
+
+    return false;
+}
+
+inline
+size_t DoesNotOverlap(Claims const& claims, Square const& square)
+{
+    auto found = std::find_if(claims.begin(), claims.end(), [&](Claim const& claim){ return !Overlaps(claim, square); });
+    return found != claims.end() ? found->id : 0;
+}
+
 
 int Main(int /* argc */, char const*const /* argv */[])
 {
     Claims claims;
 
-    //claims.emplace_back(123, 3, 2, 5, 4);
+#if 0
     claims.emplace_back(1, 1, 3, 4, 4);
     claims.emplace_back(2, 3, 1, 4, 4);
     claims.emplace_back(3, 5, 5, 2, 2);
+#else
 
-    std::cout << NoMatterHowYouSliceIt(claims) << std::endl;
+    std::regex rClaim("#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)");
+    std::smatch match;
+    std::string line;
+    while (std::getline(std::cin, line) && std::regex_match(line, match, rClaim))
+    {
+        claims.emplace_back(stoul(match[1]),
+                            stoul(match[2]),
+                            stoul(match[3]),
+                            stoul(match[4]),
+                            stoul(match[5]));
+    }
+#endif
+
+    std::cout << claims << '\n';
+    Square square(claims);
+    std::cout << NoMatterHowYouSliceIt(square) << '\n';
+    std::cout << DoesNotOverlap(claims, square) << '\n';
+
     return 0;
 }
 
