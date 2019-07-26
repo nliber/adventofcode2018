@@ -119,6 +119,7 @@ extern int Main(int /* argc */, char const*const /* argv */[]);
 
 #include <boost/operators.hpp>
 
+#include <cool/Out.h>
 #include <cool/pretty_name.h>
 #include <cool/iomanip.h>
 
@@ -205,13 +206,69 @@ struct Guard
     bool      asleep = false;
 };
 
+struct Post : std::vector<Guard>
+{
+    friend std::ostream& operator<<(std::ostream& os, Post const& that)
+    {
+        for (Guard const& g : that)
+            os << g << '\n';
+
+        return os;
+    }
+
+    void Normalize()
+    {
+        std::sort(begin(), end(), [](Guard const& l, Guard const& r){ return l.timestamp < r.timestamp; });
+        uint16_t id = 0;
+        for (Guard& g : *this)
+        {
+            if (g.id)
+                id = g.id;
+            else
+                g.id = id;
+        }
+    }
+};
+
+struct MinutesAsleep : std::unordered_map<uint16_t, uint16_t>
+{
+    friend std::ostream& operator<<(std::ostream& os, MinutesAsleep const& that)
+    { return os << cool::Out<MinutesAsleep, true>(that); }
+};
+
+uint16_t MostMinutesAsleep(Post const& post)
+{
+    MinutesAsleep minutesAsleep;
+
+    for (Post::const_iterator i = post.begin(); i != post.end(); ++i)
+    {
+        if (i->asleep)
+        {
+            uint16_t& ma = minutesAsleep[i->id];
+            ma -= i->timestamp.minute;
+            ++i;
+            ma += i->timestamp.minute;
+        }
+    }
+
+    std::cout << minutesAsleep << '\n';
+
+    return 0;
+
+}
+
 int Main(int /* argc */, char const*const /* argv */[])
 {
-    Timestamp t("0123-04-05 06:07");
-    std::cout << t << '\n';
+    Post post;
+    std::string line;
 
-    Guard g("[1518-11-01 00:00] Guard #10 begins shift");
-    std::cout << g << '\n';
+    while (std::getline(std::cin, line))
+        post.emplace_back(line);
+    post.Normalize();
+
+    std::cout << post << '\n';
+
+    MostMinutesAsleep(post);
 
     return 0;
 }
