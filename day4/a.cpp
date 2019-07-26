@@ -236,6 +236,7 @@ struct MinutesAsleep : std::unordered_map<uint16_t, uint16_t>
     { return os << cool::Out<MinutesAsleep, true>(that); }
 };
 
+inline
 uint16_t MostMinutesAsleep(Post const& post)
 {
     MinutesAsleep minutesAsleep;
@@ -251,10 +252,13 @@ uint16_t MostMinutesAsleep(Post const& post)
         }
     }
 
-    std::cout << minutesAsleep << '\n';
+    std::cout << "MinutesAsleep<id,min>:\n" << minutesAsleep << '\n';
 
-    return 0;
+    auto found = std::max_element(minutesAsleep.begin(), minutesAsleep.end(), [](auto& l, auto& r){ return l.second < r.second; });
 
+    std::cout << cool::Out(*found) << '\n';
+
+    return found->first;
 }
 
 int Main(int /* argc */, char const*const /* argv */[])
@@ -266,7 +270,7 @@ int Main(int /* argc */, char const*const /* argv */[])
         post.emplace_back(line);
     post.Normalize();
 
-    std::cout << post << '\n';
+    std::cout << "Post:\n" << post << '\n';
 
     MostMinutesAsleep(post);
 
